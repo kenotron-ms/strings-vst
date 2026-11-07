@@ -1,0 +1,108 @@
+name: Build, validate and release
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: ${{ matrix.platform }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-22.04
+            platform: linux-x86_64
+            configure: -G Ninja
+          - os: windows-2022
+            platform: windows-x86_64
+            configure: -G "Visual Studio 17 2022" -A x64
+          - os: macos-14
+            platform: macos-universal
+            configure: -G Ninja -DCMAKE_OSX_ARCHITECTURES="arm64;x86_64" -DCMAKE_OSX_DEPLOYMENT_TARGET=11.0
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - name: Linux dependencies
+        if: runner.os == 'Linux'
+        run: sudo apt-get update -qq && sudo apt-get install -y ninja-build libgl1-mesa-dev libx11-dev libxext-dev libxrandr-dev libxcursor-dev libasound2-dev libpulse-dev libjack-jackd2-dev xvfb
+      - name: Configure
+        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release ${{ matrix.configure }}
+      - name: Build
+        run: cmake --build build --config Release --parallel 3
+      - name: Engine tests
+        run: ctest --test-dir build -C Release --output-on-failure
+      - name: Render audio examples
+        shell: bash
+        run: |
+          mkdir -p build/demos
+          RENDER=build/strings_render
+          if [ "$RUNNER_OS" = Windows ]; then RENDER=build/Release/strings_render.exe; fi
+          "$RENDER" build/demos/violin-solo.wav 0 1 0
+          "$RENDER" build/demos/viola-section.wav 1 8 0
+          "$RENDER" build/demos/cello-solo.wav 2 1 0
+          "$RENDER" build/demos/bass-pizzicato.wav 3 1 1
+          "$RENDER" build/demos/violins-tremolo.wav 0 12 2
+      - name: Ad-hoc sign macOS binaries
+        if: runner.os == 'macOS'
+        run: |
+          codesign --force --deep --sign - build/bin/Strings.vst3
+          codesign --force --deep --sign - build/bin/Strings.clap
+          if [ -d build/bin/Strings.app ]; then codesign --force --deep --sign - build/bin/Strings.app; else codesign --force --sign - build/bin/Strings; fi
+      - name: Validate VST3 (Linux)
+        if: runner.os == 'Linux'
+        run: xvfb-run -a python3 tools/validate_plugin.py build/bin/Strings.vst3
+      - name: Validate VST3 (Windows/macOS)
+        if: runner.os != 'Linux'
+        run: python tools/validate_plugin.py build/bin/Strings.vst3
+      - name: Package
+        run: python tools/package.py ${{ matrix.platform }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Strings-${{ matrix.platform }}
+          path: dist/*
+          if-no-files-found: error
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: validation-${{ matrix.platform }}
+          path: build/pluginval-logs/
+          if-no-files-found: ignore
+
+  sanitizers:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - run: cmake -S . -B build -DSTRINGS_BUILD_PLUGIN=OFF -DSTRINGS_SANITIZE=ON -DCMAKE_BUILD_TYPE=Debug
+      - run: cmake --build build --parallel 2
+      - run: ctest --test-dir build --output-on-failure
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [build, sanitizers]
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: Strings-*
+          path: release-assets
+          merge-multiple: true
+      - name: Publish GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          cd release-assets
+          sha256sum *.zip > SHA256SUMS.txt
+          gh release create "$RELEASE_TAG" *.zip SHA256SUMS.txt --title "Strings $RELEASE_TAG" --notes-file ../docs/release-notes.md --verify-tag

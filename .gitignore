@@ -1,0 +1,5 @@
+/build*/
+/dist/
+*.wav
+__pycache__/
+.DS_Store

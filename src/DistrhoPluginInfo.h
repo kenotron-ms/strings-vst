@@ -1,0 +1,18 @@
+#pragma once
+#define DISTRHO_PLUGIN_NAME "Strings"
+#define DISTRHO_PLUGIN_BRAND "Kenotron"
+#define DISTRHO_PLUGIN_URI "https://github.com/kenotron-ms/strings-vst"
+#define DISTRHO_PLUGIN_CLAP_ID "ms.kenotron.strings"
+#define DISTRHO_PLUGIN_NUM_INPUTS 0
+#define DISTRHO_PLUGIN_NUM_OUTPUTS 2
+#define DISTRHO_PLUGIN_IS_SYNTH 1
+#define DISTRHO_PLUGIN_IS_RT_SAFE 1
+#define DISTRHO_PLUGIN_HAS_UI 1
+#define DISTRHO_PLUGIN_WANT_MIDI_INPUT 1
+#define DISTRHO_PLUGIN_WANT_PROGRAMS 1
+#define DISTRHO_UI_USE_NANOVG 1
+#define DISTRHO_UI_DEFAULT_WIDTH 1040
+#define DISTRHO_UI_DEFAULT_HEIGHT 720
+#define DISTRHO_UI_USER_RESIZABLE 1
+#define DISTRHO_PLUGIN_VST3_CATEGORIES "Instrument|Synth"
+#define DISTRHO_PLUGIN_CLAP_FEATURES "instrument", "synthesizer", "stereo"
