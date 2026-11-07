@@ -32,6 +32,8 @@ def main():
     shutil.copytree("docs", root / "docs")
     shutil.copy2("assets/FONT-LICENSE.txt", root / "docs/FONT-LICENSE.txt")
     shutil.copy2("third_party/dpf/LICENSE", root / "docs/DPF-LICENSE.txt")
+    shutil.copy2("build/host-smoke.json", root / "docs/audio-measurements.json")
+    shutil.copytree("build/pluginval-logs", root / "Validation")
     shutil.copytree("build/demos", root / "Audio examples")
     Path("dist").mkdir(exist_ok=True)
     archive = shutil.make_archive(str(Path("dist") / name), "zip", root.parent, name)

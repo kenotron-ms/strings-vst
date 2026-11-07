@@ -1,5 +1,6 @@
 import json
 from pathlib import Path
+import platform
 import sys
 
 import numpy as np
@@ -18,7 +19,10 @@ def estimate_pitch(audio, sample_rate, expected):
 
 
 def main():
-    plugin = load_plugin(str(Path(sys.argv[1]).resolve()))
+    plugin_path = Path(sys.argv[1]).resolve()
+    if platform.system() == "Windows":
+        plugin_path = plugin_path / "Contents/x86_64-win/Strings.vst3"
+    plugin = load_plugin(str(plugin_path))
     assert plugin.is_instrument
     plugin.vibrato_depth = 0.0
     plugin.room = 0.0

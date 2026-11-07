@@ -18,6 +18,11 @@ Automated checks are functional/numerical evidence, not acoustic validation.
   for all instruments at three rates, tuning within 12 cents with vibrato off,
   MIDI onset timestamps, articulations, stereo ensemble and saved-state recall.
   Numeric measurements are retained as workflow artifacts.
+- On Windows, Pedalboard is given the inner VST3 module path because of its
+  [bundle-path limitation](https://github.com/spotify/pedalboard/issues/433).
+  pluginval independently validates the entire installable bundle on Windows.
+- A successful exit alone is insufficient: CI also requires a fresh pluginval
+  report proving exactly one discovered plugin and final `SUCCESS`.
 - SHA-256 checksums cover the final binary archives.
 
 Run `ctest --test-dir build -C Release --output-on-failure` locally.
