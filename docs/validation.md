@@ -11,6 +11,10 @@ Automated checks are functional/numerical evidence, not acoustic validation.
   parameters/state and editor behavior on each release platform.
 - CI renders five PCM stereo WAV examples from the same DSP library linked
   into the plugin. These examples are included in release archives.
+- A separate Pedalboard host loads the actual VST3 binary and verifies sound
+  for all instruments at three rates, tuning within 12 cents with vibrato off,
+  MIDI onset timestamps, articulations, stereo ensemble and saved-state recall.
+  Numeric measurements are retained as workflow artifacts.
 - SHA-256 checksums cover the final binary archives.
 
 Run `ctest --test-dir build -C Release --output-on-failure` locally.

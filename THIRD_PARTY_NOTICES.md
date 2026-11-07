@@ -10,6 +10,8 @@ Strings source is MIT licensed. Dependencies retain their original licenses.
   as documented in `third_party/dpf/dgl/src/nanovg/`.
 - **Pugl**, bundled by DPF: ISC, see
   `third_party/dpf/dgl/src/pugl-upstream/COPYING`.
+- **Khronos OpenGL/EGL headers**, MIT: pinned sources and notices in
+  `third_party/khronos/`, used only to compile the Windows OpenGL interface.
 - **DejaVu Sans**, embedded by DPF: Bitstream Vera and public-domain DejaVu
   modifications. See `docs/DejaVu-LICENSE.txt`.
 - **Cormorant Garamond**, Christian Thalmann / Cormorant project: SIL Open Font
@@ -21,6 +23,7 @@ Strings source is MIT licensed. Dependencies retain their original licenses.
   topology are informed by its Bowed/BowTable implementation. No STK library
   is linked. Full notice in `docs/STK-LICENSE.txt`.
 
-pluginval is a **test tool only**, downloaded by CI, and is not shipped in
-Strings binary archives. No proprietary samples, impulse responses, presets,
+pluginval and Pedalboard (GPLv3) are **test tools only**, downloaded by CI, and
+are not linked into or shipped in Strings binary archives. NumPy is also a
+test-only dependency. No proprietary samples, impulse responses, presets,
 trademarks, or code from competing products are included.

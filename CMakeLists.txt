@@ -23,6 +23,11 @@ add_executable(strings_tests tests/engine_tests.cpp)
 target_link_libraries(strings_tests PRIVATE strings_engine)
 add_test(NAME engine COMMAND strings_tests)
 if(STRINGS_BUILD_PLUGIN)
+  if(MSVC)
+    file(MAKE_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/third_party/dpf/khronos/GL" "${CMAKE_CURRENT_SOURCE_DIR}/third_party/dpf/khronos/KHR")
+    configure_file(third_party/khronos/GL/glext.h "${CMAKE_CURRENT_SOURCE_DIR}/third_party/dpf/khronos/GL/glext.h" COPYONLY)
+    configure_file(third_party/khronos/KHR/khrplatform.h "${CMAKE_CURRENT_SOURCE_DIR}/third_party/dpf/khronos/KHR/khrplatform.h" COPYONLY)
+  endif()
   add_subdirectory(third_party/dpf)
   dpf_add_plugin(Strings
     TARGETS vst3 clap jack
