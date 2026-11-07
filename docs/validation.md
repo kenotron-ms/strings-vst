@@ -6,6 +6,9 @@ Automated checks are functional/numerical evidence, not acoustic validation.
   kHz; finite bounded output, audible energy, release to silence, fixed-player
   chord allocation, sustain, solo note priority, panic, malformed MIDI,
   parameter sanitization and all twelve factory presets.
+- An allocation counter checks MIDI/chord redistribution and audio processing
+  without heap allocation after preparation. Extreme control settings are
+  checked for finite, bounded output with all instruments.
 - AddressSanitizer and UndefinedBehaviorSanitizer run against engine tests.
 - pluginval 1.0.4, strictness 5, loads the built VST3, exercises processing,
   parameters/state and editor behavior on each release platform.

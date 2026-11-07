@@ -56,7 +56,7 @@ private:
     float attackCoefficient = 0.001f, releaseCoefficient = 0.001f;
     float vibratoDepth = 0, vibratoIncrement = 0, vibratoPhase = 0;
     float drift = 0, variation = 0, tremoloPhase = 0, tremoloGain = 1;
-    float pluckEnvelope = 0, outputEnvelope = 0;
+    float pluckEnvelope = 0, pluckDecay = 0.99f, outputEnvelope = 0;
     uint32_t age = 0;
 };
 

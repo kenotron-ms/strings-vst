@@ -6,8 +6,20 @@
 #include <cstdlib>
 #include <iostream>
 #include <limits>
+#include <new>
 #include <stdexcept>
 #include <vector>
+
+static bool countAllocations = false;
+static size_t allocationCount = 0;
+
+void* operator new(std::size_t size) {
+    if (countAllocations) ++allocationCount;
+    if (void* memory = std::malloc(size == 0 ? 1 : size)) return memory;
+    throw std::bad_alloc();
+}
+void operator delete(void* memory) noexcept { std::free(memory); }
+void operator delete(void* memory, std::size_t) noexcept { std::free(memory); }
 
 void require(bool condition, const char* message) { if (!condition) throw std::runtime_error(message); }
 void midi(strings::Engine& engine, uint8_t status, uint8_t number, uint8_t value) {
@@ -82,6 +94,26 @@ int main() {
         engine.midi(nullptr, 0);
         const uint8_t shortEvent[] = {0x90}; engine.midi(shortEvent, 1);
         engine.render(nullptr, nullptr, 0);
+        engine.prepare(48000);
+        engine.setParameter(strings::Ensemble, 1); engine.setParameter(strings::Players, 16);
+        allocationCount = 0; countAllocations = true;
+        for (int note = 48; note < 72; ++note) midi(engine, 0x90, static_cast<uint8_t>(note), 100);
+        render(engine, 2048);
+        for (int note = 48; note < 72; ++note) midi(engine, 0x80, static_cast<uint8_t>(note), 0);
+        countAllocations = false;
+        require(allocationCount == 0, "Heap allocation during audio/MIDI processing");
+        for (int instrument = 0; instrument < 4; ++instrument) {
+            for (int extreme = 0; extreme < 2; ++extreme) {
+                engine.reset();
+                for (uint32_t parameter = strings::BowPressure; parameter < strings::Meter; ++parameter) {
+                    const auto& spec = strings::parameterSpecs[parameter];
+                    engine.setParameter(parameter, extreme == 0 ? spec.minimum : spec.maximum);
+                }
+                engine.setParameter(strings::Instrument, static_cast<float>(instrument));
+                midi(engine, 0x90, static_cast<uint8_t>(notes[instrument]), 127);
+                render(engine, 48000);
+            }
+        }
         std::cout << "PASS: " << scenarios << " instrument/rate/articulation cases; ensemble divisi, sustain, solo legato, panic, parameter sanitization, " << strings::presetCount << " presets\n";
         return 0;
     } catch (const std::exception& error) { std::cerr << "FAIL: " << error.what() << '\n'; return 1; }

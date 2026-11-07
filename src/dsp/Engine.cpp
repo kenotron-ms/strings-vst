@@ -34,6 +34,7 @@ void Resonator::clear() { input1 = input2 = output1 = output2 = 0; }
 
 void Voice::prepare(double newSampleRate, int identity) {
     sampleRate = newSampleRate; playerId = identity;
+    pluckDecay = static_cast<float>(std::exp(-1.0 / (sampleRate * 0.002)));
     neck.prepare(static_cast<size_t>(sampleRate / 15));
     bridge.prepare(static_cast<size_t>(sampleRate / 15));
     randomState = 0x1234567u + static_cast<uint32_t>(identity) * 1973u;
@@ -70,7 +71,7 @@ void Voice::start(int midiNote, int midiChannel, float newVelocity, int instrume
     note = midiNote; channel = midiChannel; velocity = newVelocity;
     targetFrequency = 440 * std::pow(2.0f, (midiNote - 69) / 12.0f);
     gate = running = true; pizzicato = pluck;
-    if (pluck) pluckEnvelope = velocity;
+    if (pluck) { pluckEnvelope = velocity; envelope = 1; }
     age = 0;
 }
 void Voice::stop() { gate = false; }
@@ -91,7 +92,7 @@ void Voice::controls(const std::array<float, ParameterCount>& values, float bend
     bowVelocity = (0.03f + values[BowSpeed] * 0.22f) * (0.4f + velocity * 0.6f) * expression;
     attackCoefficient = 1 - std::exp(-1.0f / static_cast<float>(sampleRate * values[Attack] * 0.001));
     releaseCoefficient = 1 - std::exp(-1.0f / static_cast<float>(sampleRate * values[Release] * 0.001 / 5));
-    vibratoDepth = values[Vibrato] * (0.004f + variation * (identity + 1) * 0.0015f);
+    vibratoDepth = values[Vibrato] * (0.022f + variation * (identity + 1) * 0.004f);
     vibratoIncrement = static_cast<float>(2 * pi / sampleRate) * values[VibratoRate] * (1 + variation * identity * 0.12f);
     tremoloGain = static_cast<int>(values[Articulation]) == 2 ? 0.5f : 1.0f;
     const float decay = pizzicato ? (instrumentId + 1) * 1.3f : 7.0f;
@@ -113,8 +114,8 @@ float Voice::tick() {
     const float fromNut = -neck.read(neckLength * modulation);
     float excitation = 0;
     if (pizzicato) {
-        excitation = random() * pluckEnvelope * 0.12f;
-        pluckEnvelope *= static_cast<float>(std::exp(-1.0 / (sampleRate * 0.0015)));
+        excitation = random() * pluckEnvelope * 1.2f;
+        pluckEnvelope *= pluckDecay;
     } else {
         const float tremolo = tremoloGain == 1 ? 1 : 0.35f + 0.65f * (0.5f + 0.5f * std::sin(tremoloPhase));
         const float relativeVelocity = bowVelocity * envelope * tremolo - fromBridge - fromNut;
