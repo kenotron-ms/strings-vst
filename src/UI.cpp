@@ -55,7 +55,7 @@ protected:
         const int instrument = static_cast<int>(values[strings::Instrument]);
         label(58, 202, strings::instrumentNames[instrument], 47, ivory, false, true);
         label(648, 191, values[strings::Articulation] == 1 ? "Plucked string" : "Bow / string interaction", 11, muted, true);
-        const float contact = 525 - values[strings::BowPosition] * 280;
+        const float contact = 645 - (0.055f + values[strings::BowPosition] * 0.22f) * 585;
         const float activity = std::min(1.0f, values[strings::Meter] * 5);
         for (int stringIndex = 0; stringIndex < 4; ++stringIndex) {
             const float baseline = 233 + stringIndex * 23.0f;
@@ -72,8 +72,8 @@ protected:
         strokeColor(ivory.withAlpha(0.65f)); strokeWidth(5); stroke();
         beginPath(); moveTo(contact - 12, 220); lineTo(contact + 33, 322);
         strokeColor(brass); strokeWidth(1.2f); stroke();
-        label(58, 339, "Bridge", 10, muted);
-        label(645, 339, "Fingerboard", 10, muted, true);
+        label(58, 339, "Fingerboard", 10, muted);
+        label(645, 339, "Bridge", 10, muted, true);
         label(721, 181, "The players", 13, ivory);
         std::snprintf(buffer, sizeof(buffer), "%d %s", values[strings::Ensemble] > 0.5f ? static_cast<int>(values[strings::Players]) : 1,
                       values[strings::Ensemble] > 0.5f ? "players / divisi" : "player / legato");

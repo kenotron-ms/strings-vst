@@ -57,8 +57,8 @@ jobs:
           codesign --force --deep --sign - build/bin/Strings.vst3
           codesign --force --deep --sign - build/bin/Strings.clap
           if [ -d build/bin/Strings.app ]; then codesign --force --deep --sign - build/bin/Strings.app; else codesign --force --sign - build/bin/Strings; fi
-          lipo -verify_arch x86_64 arm64 build/bin/Strings.vst3/Contents/MacOS/Strings
-          lipo -verify_arch x86_64 arm64 build/bin/Strings.clap/Contents/MacOS/Strings
+          lipo build/bin/Strings.vst3/Contents/MacOS/Strings -verify_arch x86_64 arm64
+          lipo build/bin/Strings.clap/Contents/MacOS/Strings -verify_arch x86_64 arm64
       - name: Validate VST3 (Linux)
         if: runner.os == 'Linux'
         run: xvfb-run -a python3 tools/validate_plugin.py build/bin/Strings.vst3
