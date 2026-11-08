@@ -1,52 +1,67 @@
-# Architecture
+# Architecture — 0.2 research engine
 
-`src/dsp/Engine.*` is dependency-free C++17. `Plugin.cpp` adapts it to DPF;
-`UI.cpp` draws a native NanoVG interface and sends host-visible edits.
-`Parameters.hpp` supplies one parameter schema for engine, host and UI.
+`src/dsp/Engine.*` handles performance/allocation; `PhysicalModel.*` implements
+the dependency-free C++17 instrument. `Plugin.cpp` adapts it to DPF and `UI.cpp`
+draws the native editor. `Parameters.hpp` is the shared parameter schema.
 
 ## Signal path
 
 ```
-MIDI -> held-note ledger -> fixed-player divisi allocator
-                            -> player 1: nonlinear bow <-> two waveguides -> modal body
-                            -> player 2: nonlinear bow <-> two waveguides -> modal body
-                            -> ...
-                         stereo placement -> shared room -> gain -> soft safety saturation
+MIDI / automation -> note ledger + fixed-player divisi allocator
+  -> each player: nonlinear bow contact <-> stopped string, 2 polarizations
+                    3 open strings     <-> reciprocal passive bridge/body
+  -> stereo placement -> shared room -> gain -> soft safety saturation
 ```
 
-The bridge path is frequency-dependently damped and reflected; the finger/nut
-path reflects with velocity inversion. Relative bow/string velocity controls
-the friction-reflection coefficient. Total delay approximates `sampleRate / f`
-with compensation for the string-loss filter's phase delay. Fractional linear
-interpolation supports pitch bend/vibrato and note transitions. Eight body
-bandpass resonators use distinct instrument scale factors and small persistent
-per-player offsets. These are qualitative, not measured mechanical admittances.
+Each string lane has nut, outgoing-bridge and returning-bridge delay paths.
+Fractional interpolation, a lossy nut reflection and an allpass approximate
+propagation, damping and dispersion. Pitch tuning compensates those filters
+and the loaded body's reflection phase; it is not a stiff-string PDE solver.
+Retuning coefficients are cached while pitch/contact/body settings are constant.
 
-Pizzicato replaces bow excitation with a decaying noise burst. Tremolo changes
-bow velocity cyclically. After note-off, excitation and output decay smoothly.
-All sound generation is deterministic for a given preparation and event stream.
+Eight trapezoidal mass/spring/damper modes form a symmetric 2x2 admittance.
+Positive outer-product modal participation and implicit string loading produce
+reciprocal bridge motion. Sympathetic amount is a two-way transformer ratio;
+zero disconnects the other strings. Body profiles are synthetic, not measured.
 
-## Real-time constraints
+The bow junction solves static sticking or a bounded kinetic friction root.
+Its kinetic curve adopts Desvages/Bilbao Eq. 17a, with heuristic rosin/heating.
+Signed velocity and engagement are independent of pitch and output amplitude.
+Pizzicato uses a short force pulse. Tremolo cyclically reverses signed motion.
+The body observation mixes weighted modal velocity and bridge force; there is
+no surrounding-air pressure solver. See the research ledger for exact fidelity.
 
-Delay storage is allocated on prepare/sample-rate change, not inside processing.
-There are at most 16 voices and 128 held-note ledger entries. MIDI handling uses
-fixed arrays; sorting the pointer list requires no heap allocation. Audio
-processing performs no filesystem/network calls or locks. Continuous controls
-are smoothed; structural changes reassign players. MIDI is processed at its
-sample offset in the host block. No lookahead, and no declared plugin latency.
+## Real-time and performance ownership
 
-Solo is last-note priority. Ensemble assigns a fixed number of players round
-robin to the most recently held notes. Held notes beyond the player count are
-silent until a player becomes available. Release tails may briefly overlap
-when switching from ensemble to solo. Sustain is tracked independently per
-MIDI channel. Host parameters are serialized by DPF; transient held notes and
-delay buffers intentionally are not saved in projects.
+Delay storage is allocated at prepare/sample-rate changes, never in render.
+The engine uses at most 16 voices and 128 held-note ledger entries, fixed MIDI
+arrays and no audio-thread locks, filesystem or network calls. Continuous
+controls are smoothed. Structural changes reassign players. MIDI is applied at
+its sample offset. There is no lookahead or declared plugin latency. These
+properties do not guarantee meeting every host/device buffer deadline.
+
+Solo is last-note priority. Ensemble assigns a fixed player count round-robin
+to recent held notes; surplus notes wait for a player. Sustain is per MIDI
+channel. Host state saves input parameters, not transient notes/delay buffers.
+New physical parameters append after the existing output IDs to preserve the
+original parameter indices. CC16–28 are global expression/configuration edits,
+not MPE. Panic clears voices and the room when no voices remain.
+MIDI parameter edits request host/UI notifications through DPF. Hosts can ignore
+those requests: Pedalboard's controller readback remained cached in this run.
+Record the actual CC stream; do not assume MIDI edits become written host
+automation or that a displayed host parameter proves the engine's current CC state.
+
+Native pointer gestures update host-visible controls outside the audio thread.
+Browser studies produce optional MIDI through a user-armed output; a DAW/virtual
+port forwards it to the same engine. They do not embed a second audio engine.
+The external route can be recorded as MIDI; native UI edits use host automation
+according to the DAW's write mode. Neither automatically records itself.
 
 ## Limits
 
-No finite-element body mesh, stiff-string dispersion, torsion, bow-hair
-compliance, two-way measured body coupling, open-string sympathy or radiation
-directivity. Body modes are output resonators; the feedback termination is a
-simplified bridge-loss approximation. Full MIDI Polyphonic Expression setup
-(RPN pitch range/zones and per-note timbre) is not implemented. Instrument
-presets do not constrain MIDI to physical playable ranges.
+No measured calibration, finite bow width/hairs, distributed heat, torsion,
+finger collisions, directivity, learned performer or trained friction. Two
+transverse lanes do not reproduce the full published FDTD contact model.
+Component energy tests do not prove global stability under moving boundaries.
+MPE zones/per-note timbre are not implemented. MIDI is not constrained to
+physically playable registers. Very extreme settings can sound non-acoustic.

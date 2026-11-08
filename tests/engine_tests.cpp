@@ -80,7 +80,9 @@ int main() {
         require(engine.activeVoiceCount() == 1, "Solo legato allocation failed");
         midi(engine, 0xb0, 120, 0);
         require(engine.activeVoiceCount() == 0, "All sound off failed");
-        for (uint32_t index = 0; index < strings::Meter; ++index) {
+        require(render(engine, 2048) == 0, "Panic left shared room ringing");
+        for (uint32_t index = 0; index < strings::ParameterCount; ++index) {
+            if (!strings::isInputParameter(index)) continue;
             engine.setParameter(index, std::numeric_limits<float>::quiet_NaN());
             require(std::isfinite(engine.getParameter(index)), "NaN parameter accepted");
             engine.setParameter(index, std::numeric_limits<float>::infinity());
@@ -105,7 +107,8 @@ int main() {
         for (int instrument = 0; instrument < 4; ++instrument) {
             for (int extreme = 0; extreme < 2; ++extreme) {
                 engine.reset();
-                for (uint32_t parameter = strings::BowPressure; parameter < strings::Meter; ++parameter) {
+                for (uint32_t parameter = strings::BowPressure; parameter < strings::ParameterCount; ++parameter) {
+                    if (!strings::isInputParameter(parameter)) continue;
                     const auto& spec = strings::parameterSpecs[parameter];
                     engine.setParameter(parameter, extreme == 0 ? spec.minimum : spec.maximum);
                 }
@@ -114,6 +117,27 @@ int main() {
                 render(engine, 48000);
             }
         }
+        engine.prepare(48000);
+        for (int control = 16; control <= 23; ++control) {
+            constexpr uint32_t targets[] = {strings::BowPressure, strings::BowSpeed, strings::BowPosition, strings::BowDirection,
+                strings::BowEngaged, strings::BodyCoupling, strings::Sympathetic, strings::Rosin};
+            midi(engine, 0xb0, static_cast<uint8_t>(control), 0);
+            require(engine.getParameter(targets[control - 16]) == (control == 19 ? -1.0f : 0.0f), "Expression CC minimum mapping failed");
+            midi(engine, 0xb0, static_cast<uint8_t>(control), 127);
+            require(engine.getParameter(targets[control - 16]) == 1, "Expression CC maximum mapping failed");
+        }
+        midi(engine, 0xb0, 19, 64);
+        require(engine.getParameter(strings::BowDirection) == 0, "Bipolar CC center is not stationary");
+        midi(engine, 0xb0, 24, 2);
+        require(engine.getParameter(strings::Instrument) == 2, "Instrument CC failed");
+        midi(engine, 0xb0, 24, 127);
+        require(engine.getParameter(strings::Instrument) == 3, "Instrument CC did not clamp");
+        midi(engine, 0xb0, 25, 127); midi(engine, 0xb0, 26, 4);
+        require(engine.getParameter(strings::Ensemble) == 1 && engine.getParameter(strings::Players) == 4, "Section CC failed");
+        midi(engine, 0xb0, 26, 0);
+        require(engine.getParameter(strings::Players) == 2, "Section CC did not clamp");
+        midi(engine, 0xb0, 27, 127); midi(engine, 0xb0, 28, 0);
+        require(engine.getParameter(strings::Humanize) == 1 && engine.getParameter(strings::Room) == 0, "Conductor macro CC failed");
         std::cout << "PASS: " << scenarios << " instrument/rate/articulation cases; ensemble divisi, sustain, solo legato, panic, parameter sanitization, " << strings::presetCount << " presets\n";
         return 0;
     } catch (const std::exception& error) { std::cerr << "FAIL: " << error.what() << '\n'; return 1; }

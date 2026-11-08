@@ -14,7 +14,7 @@ protected:
     const char* getMaker() const override { return "Kenotron"; }
     const char* getHomePage() const override { return "https://github.com/kenotron-ms/strings-vst"; }
     const char* getLicense() const override { return "MIT"; }
-    uint32_t getVersion() const override { return d_version(0, 1, 0); }
+    uint32_t getVersion() const override { return d_version(0, 3, 1); }
     int64_t getUniqueId() const override { return d_cconst('K', 'S', 't', 'r'); }
     void initAudioPort(bool input, uint32_t index, AudioPort& port) override {
         Plugin::initAudioPort(input, index, port);
@@ -24,7 +24,7 @@ protected:
         const auto& spec = strings::parameterSpecs[index];
         parameter.name = spec.name; parameter.symbol = spec.symbol; parameter.unit = spec.unit;
         parameter.ranges.min = spec.minimum; parameter.ranges.max = spec.maximum; parameter.ranges.def = spec.initial;
-        parameter.hints = index >= strings::Meter ? kParameterIsOutput : kParameterIsAutomatable;
+        parameter.hints = strings::isInputParameter(index) ? kParameterIsAutomatable : kParameterIsOutput;
         if (spec.integer) parameter.hints |= kParameterIsInteger;
         if (index == strings::Ensemble) parameter.hints |= kParameterIsBoolean;
         if (index == strings::Instrument || index == strings::Articulation) {
@@ -55,6 +55,11 @@ protected:
             engine.render(outputs[0] + cursor, outputs[1] + cursor, offset - cursor);
             const uint8_t* bytes = event.size > MidiEvent::kDataSize ? event.dataExt : event.data;
             engine.midi(bytes, event.size);
+            if (event.size >= 3 && (bytes[0] & 0xf0) == 0xb0 && canRequestParameterValueChanges()) {
+                const auto parameter = strings::expressionParameter(bytes[1] & 127);
+                if (parameter != strings::ParameterCount)
+                    requestParameterValueChange(parameter, engine.getParameter(parameter));
+            }
             cursor = offset;
         }
         engine.render(outputs[0] + cursor, outputs[1] + cursor, frames - cursor);

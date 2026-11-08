@@ -17,47 +17,16 @@ float Delay::read(float samples) const {
 }
 void Delay::write(float value) { data[position] = value; position = (position + 1) % data.size(); }
 
-void Resonator::configure(float frequency, float quality, double sampleRate) {
-    const float omega = static_cast<float>(2 * pi * std::min(frequency, static_cast<float>(sampleRate * 0.43)) / sampleRate);
-    const float alpha = std::sin(omega) / (2 * quality);
-    numerator = alpha / (1 + alpha);
-    feedback1 = -2 * std::cos(omega) / (1 + alpha);
-    feedback2 = (1 - alpha) / (1 + alpha);
-}
-float Resonator::tick(float input) {
-    const float output = numerator * (input - input2) - feedback1 * output1 - feedback2 * output2;
-    input2 = input1; input1 = input;
-    output2 = output1; output1 = output;
-    return output;
-}
-void Resonator::clear() { input1 = input2 = output1 = output2 = 0; }
-
 void Voice::prepare(double newSampleRate, int identity) {
     sampleRate = newSampleRate; playerId = identity;
-    pluckDecay = static_cast<float>(std::exp(-1.0 / (sampleRate * 0.002)));
-    neck.prepare(static_cast<size_t>(sampleRate / 15));
-    bridge.prepare(static_cast<size_t>(sampleRate / 15));
-    randomState = 0x1234567u + static_cast<uint32_t>(identity) * 1973u;
+    physical.prepare(sampleRate, identity);
     instrumentId = -1;
     reset();
 }
 void Voice::reset() {
-    neck.clear(); bridge.clear();
-    for (auto& mode : body) mode.clear();
+    physical.reset();
     note = -1; running = gate = false;
-    envelope = bowEnvelope = stringLowpass = dcInput = dcOutput = outputEnvelope = 0;
-    pluckEnvelope = 0; age = 0;
-}
-float Voice::random() {
-    randomState ^= randomState << 13; randomState ^= randomState >> 17; randomState ^= randomState << 5;
-    return static_cast<float>(randomState >> 8) / 8388608.0f - 1;
-}
-void Voice::configureBody(int instrument) {
-    constexpr float scales[] = {1.0f, 0.78f, 0.43f, 0.25f};
-    constexpr float modes[] = {275, 460, 550, 720, 1100, 1600, 2250, 3100};
-    for (size_t index = 0; index < body.size(); ++index)
-        body[index].configure(modes[index] * scales[instrument] * (1 + 0.003f * playerId), 3.5f + index * 0.9f, sampleRate);
-    instrumentId = instrument;
+    envelope = 0; age = 0;
 }
 void Voice::start(int midiNote, int midiChannel, float newVelocity, int instrument, bool pluck) {
     const bool legato = running && gate && !pluck && !pizzicato && instrument == instrumentId;
@@ -67,11 +36,12 @@ void Voice::start(int midiNote, int midiChannel, float newVelocity, int instrume
         vibratoPhase = static_cast<float>(playerId * 1.713);
         tremoloPhase = playerId * 0.37f;
     }
-    if (instrumentId != instrument) configureBody(instrument);
+    if (instrumentId != instrument) { physical.configure(instrument); instrumentId = instrument; }
     note = midiNote; channel = midiChannel; velocity = newVelocity;
     targetFrequency = 440 * std::pow(2.0f, (midiNote - 69) / 12.0f);
     gate = running = true; pizzicato = pluck;
-    if (pluck) { pluckEnvelope = velocity; envelope = 1; }
+    physical.note(targetFrequency, midiNote, pluck, velocity);
+    if (pluck) envelope = 1;
     age = 0;
 }
 void Voice::stop() { gate = false; }
@@ -80,23 +50,23 @@ void Voice::controls(const std::array<float, ParameterCount>& values, float bend
     variation = values[Ensemble] > 0.5f ? values[Humanize] : 0;
     const float identity = std::sin(playerId * 2.39996f + 0.7f);
     drift = variation * identity * 7.0f;
-    frequency += 0.18f * (targetFrequency - frequency);
+    const float pitchBlend = 1 - std::exp(-32.0f / static_cast<float>(sampleRate * 0.00336));
+    frequency += pitchBlend * (targetFrequency - frequency);
     const float tuned = frequency * std::pow(2.0f, (bend * 200 + drift) / 1200.0f);
-    pole = std::clamp(0.72f - values[Brightness] * 0.46f, 0.1f, 0.8f);
-    pole = std::pow(pole, static_cast<float>(48000 / sampleRate));
-    basePeriod = std::max(4.0f, static_cast<float>(sampleRate / tuned) - pole / (1 - pole));
-    const float position = std::clamp(0.055f + values[BowPosition] * 0.22f + variation * identity * 0.008f, 0.04f, 0.3f);
-    bridgeLength = basePeriod * position;
-    neckLength = basePeriod * (1 - position);
-    bowSlope = 5 - 4 * values[BowPressure];
-    bowVelocity = (0.03f + values[BowSpeed] * 0.22f) * (0.4f + velocity * 0.6f) * expression;
+    physical.setFrequency(tuned);
+    PhysicalControls controls;
+    controls.force = values[BowPressure] * expression;
+    controls.speed = values[BowSpeed] * (0.4f + 0.6f * velocity);
+    controls.direction = values[BowDirection]; controls.engagement = values[BowEngaged];
+    controls.position = std::clamp(values[BowPosition] + variation * identity * 0.03f, 0.0f, 1.0f);
+    controls.brightness = values[Brightness]; controls.coupling = values[BodyCoupling];
+    controls.sympathetic = values[Sympathetic]; controls.rosin = values[Rosin];
+    physical.controls(controls);
     attackCoefficient = 1 - std::exp(-1.0f / static_cast<float>(sampleRate * values[Attack] * 0.001));
     releaseCoefficient = 1 - std::exp(-1.0f / static_cast<float>(sampleRate * values[Release] * 0.001 / 5));
     vibratoDepth = values[Vibrato] * (0.022f + variation * (identity + 1) * 0.004f);
     vibratoIncrement = static_cast<float>(2 * pi / sampleRate) * values[VibratoRate] * (1 + variation * identity * 0.12f);
     tremoloGain = static_cast<int>(values[Articulation]) == 2 ? 0.5f : 1.0f;
-    const float decay = pizzicato ? (instrumentId + 1) * 1.3f : 7.0f;
-    loopGain = std::pow(0.001f, 1.0f / (tuned * decay));
 }
 float Voice::tick() {
     if (!running) return 0;
@@ -108,37 +78,13 @@ float Voice::tick() {
     if (tremoloPhase > 2 * pi) tremoloPhase -= static_cast<float>(2 * pi);
     const float vibratoRamp = std::min(1.0f, static_cast<float>(age / (sampleRate * 0.3)));
     const float modulation = 1 + vibratoDepth * vibratoRamp * std::sin(vibratoPhase);
-    const float bridgeWave = bridge.read(bridgeLength * modulation);
-    stringLowpass = (1 - pole) * bridgeWave + pole * stringLowpass;
-    const float fromBridge = -loopGain * stringLowpass;
-    const float fromNut = -neck.read(neckLength * modulation);
-    float excitation = 0;
-    if (pizzicato) {
-        excitation = random() * pluckEnvelope * 1.2f;
-        pluckEnvelope *= pluckDecay;
-    } else {
-        const float tremolo = tremoloGain == 1 ? 1 : 0.35f + 0.65f * (0.5f + 0.5f * std::sin(tremoloPhase));
-        const float relativeVelocity = bowVelocity * envelope * tremolo - fromBridge - fromNut;
-        const float frictionBase = std::abs((relativeVelocity + 0.001f) * bowSlope) + 0.75f;
-        const float squared = frictionBase * frictionBase;
-        const float friction = std::clamp(1.0f / (squared * squared), 0.01f, 0.98f);
-        excitation = relativeVelocity * friction * envelope;
-    }
-    bridge.write(std::clamp(fromNut + excitation, -4.0f, 4.0f));
-    neck.write(std::clamp(fromBridge + excitation, -4.0f, 4.0f));
-    const float raw = bridgeWave;
-    float resonance = 0;
-    constexpr float weights[] = {0.8f, 1, 0.85f, 0.7f, 0.65f, 0.6f, 0.5f, 0.35f};
-    for (size_t index = 0; index < body.size(); ++index) resonance += weights[index] * body[index].tick(raw);
-    const float input = raw * 0.28f + resonance * 1.8f;
-    const float output = input - dcInput + 0.995f * dcOutput;
-    dcInput = input; dcOutput = output;
-    outputEnvelope += 0.002f * (std::abs(output) - outputEnvelope);
+    const float gesture = tremoloGain == 1 ? 1.0f : std::sin(tremoloPhase);
+    const float output = physical.tick(envelope, modulation, gesture);
     if (!gate && envelope < 0.0001f) {
         running = false; note = -1;
         return 0;
     }
-    return output * envelope * 2;
+    return output * envelope;
 }
 
 void RoomModel::prepare(double sampleRate) {
@@ -177,7 +123,7 @@ void Engine::reset() {
     room.reset(); smoothed = parameters; meter = 0; controlCounter = 0; orderCounter = 0;
 }
 void Engine::setParameter(uint32_t index, float value) {
-    if (index >= Meter) return;
+    if (!isInputParameter(index)) return;
     const float sanitized = sanitizeParameter(index, value);
     if (parameters[index] == sanitized) return;
     parameters[index] = sanitized;
@@ -189,6 +135,9 @@ void Engine::setParameter(uint32_t index, float value) {
 float Engine::getParameter(uint32_t index) const {
     if (index == Meter) return meter;
     if (index == ActivePlayers) return static_cast<float>(activeVoiceCount());
+    if (index == BowMotionMonitor) return smoothed[BowSpeed] * smoothed[BowDirection];
+    if (index == BowWeightMonitor) return smoothed[BowPressure];
+    if (index == BowGateMonitor) return smoothed[BowEngaged];
     return index < ParameterCount ? parameters[index] : 0;
 }
 int Engine::activeVoiceCount() const {
@@ -245,6 +194,12 @@ void Engine::midi(const uint8_t* data, uint32_t size) {
     else if (status == 0xb0) {
         if (number == 1) modulations[channel] = value / 127.0f;
         else if (number == 11) expressions[channel] = value / 127.0f;
+        else if (number >= 16 && number <= 28) {
+            const float normalized = number == 19 ? (value - 64) / (value < 64 ? 64.0f : 63.0f)
+                : number == 24 || number == 26 ? static_cast<float>(value)
+                : number == 25 ? (value >= 64 ? 1.0f : 0.0f) : value / 127.0f;
+            setParameter(expressionParameter(number), normalized);
+        }
         else if (number == 64) {
             sustain[channel] = value >= 64;
             if (!sustain[channel]) {
@@ -256,6 +211,7 @@ void Engine::midi(const uint8_t* data, uint32_t size) {
             sustain[channel] = false;
             if (number == 120) for (auto& voice : voices) if (voice.channel == channel) voice.reset();
             redistribute();
+            if (number == 120 && activeVoiceCount() == 0) { room.reset(); meter = 0; }
         } else if (number == 121) {
             sustain[channel] = false; bends[channel] = modulations[channel] = 0; expressions[channel] = pressures[channel] = 1;
             for (auto& entry : notes) if (entry.channel == channel && !entry.keyDown) entry.velocity = 0;
@@ -264,9 +220,17 @@ void Engine::midi(const uint8_t* data, uint32_t size) {
     }
 }
 void Engine::updateControls() {
-    for (size_t index = 0; index < Meter; ++index) {
+    const float controlBlend = 1 - std::exp(-32.0f / static_cast<float>(sampleRate * 0.013));
+    for (size_t index = 0; index < ParameterCount; ++index) {
+        if (!isInputParameter(static_cast<uint32_t>(index))) continue;
         if (parameterSpecs[index].integer) smoothed[index] = parameters[index];
-        else smoothed[index] += 0.05f * (parameters[index] - smoothed[index]);
+        else {
+            const float previous = smoothed[index];
+            smoothed[index] += controlBlend * (parameters[index] - smoothed[index]);
+            const float tolerance = (parameterSpecs[index].maximum - parameterSpecs[index].minimum) * 1e-6f;
+            if (smoothed[index] == previous || std::abs(parameters[index] - smoothed[index]) <= tolerance)
+                smoothed[index] = parameters[index];
+        }
     }
     outputGain = std::pow(10.0f, smoothed[Gain] / 20.0f) * 0.7f;
     for (auto& voice : voices) if (voice.active()) {

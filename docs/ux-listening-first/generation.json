@@ -1,0 +1,47 @@
+{
+  "created_at": "2026-11-07T15:03:06.178206+00:00",
+  "tool": "Bundled imagegen CLI through private local credential launcher",
+  "model": "gpt-image-2",
+  "quality": "high",
+  "size": "1536x1024",
+  "requests": "Five generation jobs and one single-image edit; all completed successfully.",
+  "selected": [
+    {
+      "state": "Listen",
+      "image": "images/01-listen-v2.png"
+    },
+    {
+      "state": "Shape",
+      "image": "images/02-shape.png"
+    },
+    {
+      "state": "Perform",
+      "image": "images/03-perform-dualsense.png"
+    },
+    {
+      "state": "Refine",
+      "image": "images/04-refine-phrase.png"
+    },
+    {
+      "state": "Model",
+      "image": "images/05-model-details.png"
+    }
+  ],
+  "inspection": "All five selected images visually inspected. See review.md for limitations.",
+  "implementation": "Raster concepts only; no new native functionality or hardware validation.",
+  "sha256": {
+    "images/01-listen-v2.png": "11ad308ea034246030b25b1b72f1b3ddb91e37cf7093121c9daa61322f13cafc",
+    "images/01-listen.png": "feaa5cb1740e051be51a15825344470def295a6159611d628d75e5333f1d42b8",
+    "images/02-shape.png": "85d1442215f9a77dbe7ab4d3cbbca1687ef4980f766b4209eff725dd4c55d9fe",
+    "images/03-perform-dualsense.png": "206056808aec4086ea43dfc3250ba7991222bad520d7ecf367bd72e05e3980de",
+    "images/04-refine-phrase.png": "0764d09f9bf9d23b4fbcc0f0c124e2fc223aa7cf7419c28ddf736796ff68bfde",
+    "images/05-model-details.png": "e37b238347fef491d1f49d1c80b59659aa4cd646621d3891d1be2663c517a69e",
+    "images/overview.png": "3a84f4f62e650dde81dce5826cef3361aed496b30a7a068d5c0491ac60ce4408",
+    "prompts/01-listen-revision.txt": "eaa3e0d22794247d647c3b44e22a3fa445ac4cec35d93c36b40c9f34c7b1b39c",
+    "prompts/01-listen.txt": "430404ddb0a46a8354f6784da64341827a0737129c6676ee52600aa0c563f56e",
+    "prompts/02-shape.txt": "fe9fbf7235da388bbc3caa8fb126cafa5c8f1aa23eb1ce29500a26d9186c7f6e",
+    "prompts/03-perform-dualsense.txt": "192173e92a48093f594ef14f2da4fe99e5771eec913a9e200a387433d4a20715",
+    "prompts/04-refine-phrase.txt": "17738282c2d4b52c535df9557ef9ac1f61de094e5b66a19659ce907b0c8f8338",
+    "prompts/05-model-details.txt": "5ab8263cb5edbd141ad67cb81d180fcf97e70a67aa38aa9de9c718751584ff15"
+  }
+}

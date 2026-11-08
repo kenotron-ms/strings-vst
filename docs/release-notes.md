@@ -1,4 +1,31 @@
-# Strings 0.1.0
+# Strings 0.3.1 (research/performance build)
+
+Experimental physical-modeling instrument with a keyboard-first native editor.
+
+- Four strings per player, two transverse waveguide lanes per string, nonlinear
+  stick/slip bow contact and reciprocal passive modal bridge/body coupling.
+- Sympathetic strings, propagation loss/dispersion, continuous bow direction,
+  force, speed, lift, contact, rosin and coupling controls.
+- Energy/Tone/Vibrato performance knobs, editable local audition phrase and
+  bow-weight curve, scratch expression capture/replay and Original/Take compare.
+- Violin, viola, cello and double bass; solo legato and fixed-size divisi.
+- Research-to-code ledger, five browser UX studies, reusable native components,
+  expanded physics/interaction tests and an optional MIDI-to-strings render tool.
+- Cross-platform CI builds VST3, CLAP and standalone; Mac binaries are universal
+  Apple Silicon/Intel, deployment target macOS 11, ad-hoc signed, not notarized.
+
+Read `mac-testing.md` for CI artifact downloads and installation. Logic Pro is
+not supported: no Audio Unit is included. Local phrase/take tools are not host
+transport, MIDI-clip import, or persistent projects. Controller expression uses
+an external MIDI adapter; DualSense haptics are not implemented.
+
+This is a reduced model with synthetic body profiles, not measured acoustic
+equivalence or professional-instrument parity. Full bow-hair/thermal-contact
+simulation, measured admittance fitting and neural performance models remain
+future work. The copyrighted score/audio used in the local MuseScore experiment
+is not included in source or binary downloads.
+
+## Previous release: Strings 0.1.0
 
 First experimental release: a working sample-free physical-model string
 instrument, not a claim of measured acoustic equivalence.
