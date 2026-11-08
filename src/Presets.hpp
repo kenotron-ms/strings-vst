@@ -11,7 +11,8 @@ inline constexpr uint32_t presetCount = sizeof(presetNames) / sizeof(presetNames
 
 template<class Setter> void applyPreset(uint32_t index, Setter set) {
     if (index >= presetCount) return;
-    for (uint32_t parameter = 0; parameter < Meter; ++parameter) set(parameter, parameterSpecs[parameter].initial);
+    for (uint32_t parameter = 0; parameter < ParameterCount; ++parameter)
+        if (isInputParameter(parameter)) set(parameter, parameterSpecs[parameter].initial);
     set(Instrument, static_cast<float>(index % 4));
     if (index >= 4 && index < 8) {
         set(Ensemble, 1); set(Players, index == 7 ? 4 : 8);

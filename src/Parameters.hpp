@@ -8,7 +8,8 @@ namespace strings {
 enum ParameterId : uint32_t {
     Instrument, Ensemble, Players, BowPressure, BowSpeed, BowPosition,
     Vibrato, VibratoRate, Brightness, Attack, Release, Humanize, Room, Gain,
-    Articulation, Meter, ActivePlayers, ParameterCount
+    Articulation, Meter, ActivePlayers, BowDirection, BowEngaged, BodyCoupling,
+    Sympathetic, Rosin, BowMotionMonitor, BowWeightMonitor, BowGateMonitor, ParameterCount
 };
 
 struct ParameterSpec {
@@ -38,8 +39,27 @@ inline constexpr std::array<ParameterSpec, ParameterCount> parameterSpecs {{
     {"Output", "gain", "dB", -48, 6, -6, false},
     {"Articulation", "articulation", "", 0, 2, 0, true},
     {"Output level", "meter", "", 0, 1, 0, false},
-    {"Active players", "active_players", "", 0, 16, 0, true}
+    {"Active players", "active_players", "", 0, 16, 0, true},
+    {"Bow direction", "bow_direction", "", -1, 1, 1, false},
+    {"Bow engaged", "bow_engaged", "", 0, 1, 1, false},
+    {"Body coupling", "body_coupling", "%", 0, 1, 0.6f, false},
+    {"Sympathetic strings", "sympathetic", "%", 0, 1, 0.45f, false},
+    {"Rosin grip", "rosin", "%", 0, 1, 0.5f, false},
+    {"Bow motion monitor", "bow_motion_monitor", "", -1, 1, 0, false},
+    {"Bow weight monitor", "bow_weight_monitor", "", 0, 1, 0, false},
+    {"Bow gate monitor", "bow_gate_monitor", "", 0, 1, 0, false}
 }};
+
+inline constexpr bool isInputParameter(uint32_t index) {
+    return index < ParameterCount && index != Meter && index != ActivePlayers
+        && index != BowMotionMonitor && index != BowWeightMonitor && index != BowGateMonitor;
+}
+
+inline constexpr uint32_t expressionParameter(uint32_t controller) {
+    constexpr uint32_t targets[] = {BowPressure, BowSpeed, BowPosition, BowDirection,
+        BowEngaged, BodyCoupling, Sympathetic, Rosin, Instrument, Ensemble, Players, Humanize, Room};
+    return controller >= 16 && controller <= 28 ? targets[controller - 16] : ParameterCount;
+}
 
 inline constexpr const char* instrumentNames[] = {"Violin", "Viola", "Cello", "Double bass"};
 inline constexpr const char* articulationNames[] = {"Arco", "Pizzicato", "Tremolo"};

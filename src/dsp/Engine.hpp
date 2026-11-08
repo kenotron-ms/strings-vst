@@ -1,5 +1,6 @@
 #pragma once
 #include "Parameters.hpp"
+#include "PhysicalModel.hpp"
 #include <array>
 #include <cstddef>
 #include <vector>
@@ -19,14 +20,6 @@ private:
     size_t position = 0;
 };
 
-struct Resonator {
-    void configure(float frequency, float quality, double sampleRate);
-    float tick(float input);
-    void clear();
-    float numerator = 0, feedback1 = 0, feedback2 = 0;
-    float input2 = 0, input1 = 0, output1 = 0, output2 = 0;
-};
-
 class Voice {
 public:
     void prepare(double sampleRate, int identity);
@@ -41,22 +34,14 @@ public:
     int channel = 0;
     float pan = 0;
 private:
-    void configureBody(int instrument);
-    float random();
     double sampleRate = 48000;
-    Delay neck, bridge;
-    std::array<Resonator, 8> body;
-    uint32_t randomState = 1;
+    PhysicalInstrument physical;
     int playerId = 0, instrumentId = -1;
     bool running = false, gate = false, pizzicato = false;
     float envelope = 0, velocity = 0, frequency = 220, targetFrequency = 220;
-    float bowEnvelope = 0, stringLowpass = 0, dcInput = 0, dcOutput = 0;
-    float neckLength = 100, bridgeLength = 20, basePeriod = 120;
-    float pole = 0.55f, loopGain = 0.995f, bowSlope = 3, bowVelocity = 0.15f;
     float attackCoefficient = 0.001f, releaseCoefficient = 0.001f;
     float vibratoDepth = 0, vibratoIncrement = 0, vibratoPhase = 0;
     float drift = 0, variation = 0, tremoloPhase = 0, tremoloGain = 1;
-    float pluckEnvelope = 0, pluckDecay = 0.99f, outputEnvelope = 0;
     uint32_t age = 0;
 };
 

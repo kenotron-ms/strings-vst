@@ -5,9 +5,40 @@ cello and double bass, in solo or fixed-size divisi ensembles. VST3, CLAP and
 standalone for Windows, macOS and Linux. MIT licensed; no sample downloads,
 accounts, activation or network connection needed to play.
 
-![Strings native instrument interface](docs/ui-mockup.png)
+**Local 0.3.1 research/performance build, validated on Linux x86-64.**
+The published 0.1.0 release is the earlier scaffolding; it does not contain this
+new engine or the five performance studies. See the
+[research ledger](docs/research-implementation.md),
+[five Astra UX studies](docs/ux-performance/index.html), and
+[validation/run guide](docs/research-validation.md) for the current work.
+For the new cross-platform CI builds, including the universal Mac archive, see
+the [Mac testing guide](docs/mac-testing.md). A passing CI build is not a new
+versioned release; check its commit before downloading.
+
+The native [organic performance screen](docs/ux-components/native-performance.md)
+implements reusable NanoVG components: keyboard-first Energy/Tone/Vibrato knobs,
+an editable local piano roll and bow-weight curve, optional direct gesture
+surface, input map, expression capture/replay with Original/Take comparison,
+undo, and progressively disclosed physical controls.
+The [component plan and reference crops](docs/ux-components/component-plan.md)
+separate the generated design from executable UI. Controller expression still
+uses the documented external MIDI adapter; device-specific haptics are not implemented.
+
+The [native component catalogue](docs/ux-components/catalog.md) identifies each
+control and its test boundary. The [standalone workflow trial](docs/ux-components/standalone-trial.md)
+records an original four-part pirate-adventure cue through real keyboard/knob
+interaction, with intermediate screenshots, raw stems and MIDI export.
+
+![Native knob-led editor](docs/ux-components/screenshots/performance-knobs-native.png)
 
 ## Download and install
+
+The current local delivery is `dist/Strings-0.3.1-linux-x86_64.zip`, with
+`dist/Strings-0.3.1-source.tar.gz` and `dist/Strings-0.3.1-SHA256SUMS`.
+It includes the knob-first controls, component catalogue, five interactive
+studies, validation reports and the original **Harbour Run** standalone trial.
+See the [per-outcome audit](docs/delivery-0.3.1.md) for exact evidence and limits.
+The public release link below is **not** a publication of this new local build.
 
 Get the archive for your operating system from
 [GitHub Releases](https://github.com/kenotron-ms/strings-vst/releases/latest).
@@ -31,7 +62,7 @@ with `xattr -dr com.apple.quarantine /path/to/Strings.vst3`. Windows builds are
 also unsigned. Linux requires desktop OpenGL/X11 libraries and ALSA/PulseAudio
 or JACK for standalone playback. A running JACK server is optional.
 
-**Logic Pro does not load VST3 or CLAP.** An Audio Unit is not included in 0.1.0.
+**Logic Pro does not load VST3 or CLAP.** An Audio Unit is not included.
 Use a VST3/CLAP-capable host such as REAPER, Cubase, Bitwig or Ableton Live
 (VST3). Individual host compatibility still needs broader user testing.
 
@@ -46,7 +77,7 @@ Use a VST3/CLAP-capable host such as REAPER, Cubase, Bitwig or Ableton Live
   attack/release, player variation and room. Parameters are host-automatable.
 - Twelve factory presets are available in the host and via the UI's arrows.
 - Drag a control vertically; hold Shift for fine adjustment. Scroll to adjust;
-  double-click to reset. The on-screen keyboard plays notes. `A S D F G H J K`
+  double-click to reset. `A S D F G H J K`
   plays a white-key octave when the UI has keyboard focus.
 - MIDI: note on/off, velocity, pitch bend (±2 semitones), CC1 vibrato,
   CC11 expression, CC64 sustain, channel pressure, CC120 panic, CC123 all notes
@@ -55,21 +86,28 @@ Use a VST3/CLAP-capable host such as REAPER, Cubase, Bitwig or Ableton Live
 
 ## What is physically modeled?
 
-Two fractional-delay traveling-wave paths meet at a nonlinear bow-friction
-junction. Frequency-dependent bridge loss, finger/nut reflection, bow speed,
-pressure and contact point govern excitation and string vibration. A bank of
-body resonators shapes radiation. Pizzicato injects a short noise excitation;
-tremolo modulates the virtual bow. Ensemble players have independent waveguides,
-body responses, detuning, vibrato phase/rate and positions. A shared room model
-adds optional stereo ambience. No recorded instrument samples are used.
+The 0.2 research engine gives each player four strings with two transverse
+waveguide lanes each. A nonlinear stick/slip bow junction excites the stopped
+string. An implicit, passive two-direction modal bridge returns body motion
+to all four strings, including sympathetic open strings. Loss and allpass
+dispersion act inside the propagation paths. Signed bow motion, force, contact,
+lift, rosin grip and body coupling change the simulation rather than simply
+crossfading samples. Pizzicato uses a short force pulse; tremolo reverses the
+bow. Independent players feed stereo placement and an optional shared room.
 
-**0.1.0 is an experimental physical-model synthesizer, not a validated acoustic
-digital twin or a replacement for SWAM/Soliste.** Body modes are hand-tuned,
-not fitted to measurements. The model omits torsional and dual-polarization
-motion, sympathetic open-string coupling, finite bow width, realistic bow
-changes and measured radiation directivity. Controls are normalized musical
-parameters, not calibrated newtons or meters/second. Listen to the included
-audio examples before deciding whether its timbre suits your music.
+**This is still an experimental reduced model, not a measured acoustic digital
+twin or demonstrated commercial competitor.** Body and string profiles are
+synthetic, not measurement fits. Finite bow width, spatial heat flow, bow hairs,
+torsion, fingerboard collisions and radiation directivity remain unimplemented.
+Controls are normalized musical requests, not calibrated physical sensors.
+No neural model is trained or used. Listen to the audition files and inspect
+the research ledger before judging the timbre.
+
+For optional direct mouse/touchpad playing, select **Mouse** or **Touch**,
+hold a pitch and drag the bow panel: horizontal motion sets signed velocity,
+vertical position sets force. Release or focus loss lifts the bow. Turn gesture
+control off with **Follow controls** to restore its captured baseline. The browser studies add a standard
+gamepad route through optional Web MIDI; see [input devices](docs/input-devices.md).
 
 See [competitive research](docs/competitive-analysis.md),
 [architecture](docs/architecture.md) and [release notes](docs/release-notes.md).
@@ -93,6 +131,11 @@ The dependency-free engine and offline renderer also build without DPF:
 `cmake -S . -B build-dsp -DSTRINGS_BUILD_PLUGIN=OFF`.
 `strings_render output.wav [instrument:0-3] [players:1-16] [articulation:0-2]`
 renders a short phrase. Add `sustain` to render a fixed note without vibrato.
+
+For the research tests, `tests/host_smoke.py` and `tests/research_audio.py` use
+NumPy and Pedalboard; `tests/ux_bridge_smoke.py` also uses Playwright/Chromium.
+Reproduction commands and the distinction between synthetic input fixtures
+and physically tested hardware are in [the run guide](docs/research-validation.md).
 
 ## Validation and releases
 

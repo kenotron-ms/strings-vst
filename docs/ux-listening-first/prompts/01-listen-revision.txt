@@ -1,0 +1,8 @@
+Use case: ui-mockup
+Edit target: the supplied first-use Strings LISTEN concept image. Preserve its warm paper/pine palette, composition, size, legibility, phrase notation, controls, spacing, and outside Concept caption. This is a raster concept, not an implemented interface.
+Make only these corrections:
+1. Correct the character surface axis labels to form two intelligible opposing pairs: left is Restrained, right is Intense, top is Edged, bottom is Soft. Exactly these labels, in these positions. Keep the point and axes where they are.
+2. The first-use view is Listen, not Shape. Remove the active underline beneath Shape and give Shape, Perform and Refine equal secondary styling. Do not add a new navigation item.
+3. Make Choose an input look available, not disabled: normal ink text and a thin solid border, retaining its secondary status.
+4. The comparison button should read Compare B rather than Compare followed by a standalone B badge. Keep the button size.
+Do not redesign or add controls. Do not add a controller, hardware-ready claims, measurements, telemetry, or implemented-feature claims.
