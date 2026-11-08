@@ -5,40 +5,62 @@ cello and double bass, in solo or fixed-size divisi ensembles. VST3, CLAP and
 standalone for Windows, macOS and Linux. MIT licensed; no sample downloads,
 accounts, activation or network connection needed to play.
 
-**Local 0.3.1 research/performance build, validated on Linux x86-64.**
-The published 0.1.0 release is the earlier scaffolding; it does not contain this
-new engine or the five performance studies. See the
+**Strings 0.3.2 — live instrument and 88-key keyboard.**
+This experimental research/performance version includes the physical engine and
+simplified native editor, unlike the earlier 0.1.0 scaffolding. See the
 [research ledger](docs/research-implementation.md),
 [five Astra UX studies](docs/ux-performance/index.html), and
 [validation/run guide](docs/research-validation.md) for the current work.
-For the new cross-platform CI builds, including the universal Mac archive, see
-the [Mac testing guide](docs/mac-testing.md). A passing CI build is not a new
-versioned release; check its commit before downloading.
+For the universal Mac release and installation in REAPER, see
+the [Mac testing guide](docs/mac-testing.md). The release archives include a
+build identity file naming their exact source commit and workflow run.
 
-The native [organic performance screen](docs/ux-components/native-performance.md)
-implements reusable NanoVG components: keyboard-first Energy/Tone/Vibrato knobs,
-an editable local piano roll and bow-weight curve, optional direct gesture
-surface, input map, expression capture/replay with Original/Take comparison,
-undo, and progressively disclosed physical controls.
+The native [live instrument screen](docs/ux-components/live-instrument.md)
+implements reusable NanoVG components: Energy/Tone/Vibrato knobs, a playable
+88-key piano, optional bow gesture surface and progressively disclosed physical
+controls. There is no embedded note editor, demo transport or instructional panel.
 The [component plan and reference crops](docs/ux-components/component-plan.md)
 separate the generated design from executable UI. Controller expression still
 uses the documented external MIDI adapter; device-specific haptics are not implemented.
 
 The [native component catalogue](docs/ux-components/catalog.md) identifies each
-control and its test boundary. The [standalone workflow trial](docs/ux-components/standalone-trial.md)
-records an original four-part pirate-adventure cue through real keyboard/knob
-interaction, with intermediate screenshots, raw stems and MIDI export.
+control and its test boundary. The earlier [standalone workflow trial](docs/ux-components/standalone-trial.md)
+documents an externally recorded four-part cue. Its automation targets the prior
+UI layout and needs updating before rerunning; it is not a native recording feature.
 
-![Native knob-led editor](docs/ux-components/screenshots/performance-knobs-native.png)
+![Native live instrument](docs/ux-components/screenshots/live-instrument-native.png)
+
+### Play standalone without a MIDI device
+
+The current source adds a full **88-key piano (A0–C8)** below the editor: click/hold keys or
+drag between them to play. Type `A W S E D F T G Y H U J K` for a chromatic octave
+(the original violin `A S D F G H J K` white-note mapping remains). `Z`/`X` or the octave
+buttons move the highlighted typing span, not the piano; velocity buttons
+set the strength of subsequent notes. The typing span stays within the visible piano.
+Held local notes highlight. Mouse release, leaving the key area, Escape, Release,
+focus loss, octave/instrument changes and closing the UI release local notes.
+Computer keys require editor focus; modifier shortcuts do not trigger notes.
+These additions are included in 0.3.2; replace any previously downloaded 0.3.1 build.
+
+The standalone is a live instrument: play the keyboard and shape the sound.
+**Knobs**, **Bow** and **Details** switch control views; the piano stays visible.
+The earlier note plot, demo playback, bow-take recorder and workflow-help panels
+have been removed. Native standalone song recording/save/export remain unimplemented.
+
+In a DAW, use the **host's** transport and MIDI recording/editor, automation and
+bounce. Clicked/typed plugin keys audition the engine; there is **no MIDI output**
+to record those events into host clips. Use the DAW's computer-MIDI keyboard or
+external MIDI for recordable input. The host owns composition and recording.
+See the [live instrument contract](docs/ux-components/live-instrument.md).
 
 ## Download and install
 
-The current local delivery is `dist/Strings-0.3.1-linux-x86_64.zip`, with
-`dist/Strings-0.3.1-source.tar.gz` and `dist/Strings-0.3.1-SHA256SUMS`.
-It includes the knob-first controls, component catalogue, five interactive
-studies, validation reports and the original **Harbour Run** standalone trial.
-See the [per-outcome audit](docs/delivery-0.3.1.md) for exact evidence and limits.
-The public release link below is **not** a publication of this new local build.
+The 0.3.2 release provides `Strings-0.3.2-macos-universal.zip`,
+`Strings-0.3.2-windows-x86_64.zip` and `Strings-0.3.2-linux-x86_64.zip`, plus
+`SHA256SUMS.txt`. Archives include VST3, CLAP, standalone, documentation,
+audio examples, validation logs and build identity. The older
+[0.3.1 audit](docs/delivery-0.3.1.md) records a historical local delivery, not
+validation of these new binaries or their removed composition prototype.
 
 Get the archive for your operating system from
 [GitHub Releases](https://github.com/kenotron-ms/strings-vst/releases/latest).

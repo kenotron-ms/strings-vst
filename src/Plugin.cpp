@@ -14,7 +14,7 @@ protected:
     const char* getMaker() const override { return "Kenotron"; }
     const char* getHomePage() const override { return "https://github.com/kenotron-ms/strings-vst"; }
     const char* getLicense() const override { return "MIT"; }
-    uint32_t getVersion() const override { return d_version(0, 3, 1); }
+    uint32_t getVersion() const override { return d_version(0, 3, 2); }
     int64_t getUniqueId() const override { return d_cconst('K', 'S', 't', 'r'); }
     void initAudioPort(bool input, uint32_t index, AudioPort& port) override {
         Plugin::initAudioPort(input, index, port);

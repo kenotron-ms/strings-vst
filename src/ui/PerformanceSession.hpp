@@ -11,6 +11,22 @@ inline constexpr std::array<PhraseNote, 8> auditionPhrase {{{0, 0, 0.95}, {2, 0.
     {2, 5.45, 1.05}, {0, 6.4, 1.4}}};
 inline constexpr double phraseDuration = 8;
 
+class PreviewTransport {
+public:
+    enum class State { Stopped, Playing, Paused };
+    void start(double now) { if (std::isfinite(now)) { origin = now; held = 0; state = State::Playing; } }
+    void pause(double now) { if (running() && std::isfinite(now)) { held = at(now); state = State::Paused; } }
+    void resume(double now) { if (paused() && std::isfinite(now)) { origin = now - held; state = State::Playing; } }
+    void stop() { state = State::Stopped; held = 0; }
+    bool active() const { return state != State::Stopped; }
+    bool running() const { return state == State::Playing; }
+    bool paused() const { return state == State::Paused; }
+    double at(double now) const { return running() && std::isfinite(now) ? std::clamp(now - origin, 0.0, phraseDuration) : held; }
+private:
+    State state = State::Stopped;
+    double origin = 0, held = 0;
+};
+
 struct KeyboardExpression {
     static ExpressionPoint energy(float value) {
         const float bounded = std::isfinite(value) ? std::clamp(value, 0.0f, 1.0f) : 0;

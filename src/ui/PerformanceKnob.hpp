@@ -17,6 +17,6 @@ struct PerformanceKnob {
     }
 };
 
-inline constexpr std::array<PerformanceKnob, 3> performanceKnobs {{{145, 263, 42}, {350, 263, 42}, {555, 263, 42}}};
+inline constexpr std::array<PerformanceKnob, 3> performanceKnobs {{{200, 282, 58}, {520, 282, 58}, {840, 282, 58}}};
 
 }

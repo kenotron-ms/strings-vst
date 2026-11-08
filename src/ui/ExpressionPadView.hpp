@@ -20,11 +20,10 @@ public:
             canvas.textAlign(align | DGL_NAMESPACE::NanoVG::ALIGN_BASELINE);
             canvas.text(horizontalPosition, verticalPosition, text, nullptr);
         };
-        label(left, layout.top + 29, "Shape the phrase", 22, ink, DGL_NAMESPACE::NanoVG::ALIGN_LEFT);
-        const char* mode = direct ? (model.dragging() ? "Direct / held" : "Direct / ready") : "Follow controls";
+        label(left, layout.top + 29, "Bow", 22, ink, DGL_NAMESPACE::NanoVG::ALIGN_LEFT);
+        const char* mode = direct ? (model.dragging() ? "Held" : "Released") : "";
         label(left + width, layout.top + 28, mode, 11, direct ? accent : muted, DGL_NAMESPACE::NanoVG::ALIGN_RIGHT);
-        label(left, top - 9, "Bow weight / firm at top", 10, muted, DGL_NAMESPACE::NanoVG::ALIGN_LEFT);
-        label(left + width, top - 9, "Smoothed engine commands", 10, muted, DGL_NAMESPACE::NanoVG::ALIGN_RIGHT);
+        label(left, top - 9, "Weight", 10, muted, DGL_NAMESPACE::NanoVG::ALIGN_LEFT);
         label(left + 8, top + height - 8, "Light", 10, muted, DGL_NAMESPACE::NanoVG::ALIGN_LEFT);
         canvas.beginPath(); canvas.moveTo(horizontal(0), top); canvas.lineTo(horizontal(0), top + height);
         canvas.strokeColor(guide); canvas.strokeWidth(1); canvas.stroke();
@@ -50,11 +49,8 @@ public:
             canvas.strokeColor(ink); canvas.strokeWidth(1.5f); canvas.stroke();
         }
         label(left, top + height + 14, "Reverse", 10, muted, DGL_NAMESPACE::NanoVG::ALIGN_LEFT);
-        label(horizontal(0), top + height + 14, "Rest / signed motion", 10, muted, DGL_NAMESPACE::NanoVG::ALIGN_CENTER);
+        label(horizontal(0), top + height + 14, "Rest", 10, muted, DGL_NAMESPACE::NanoVG::ALIGN_CENTER);
         label(left + width, top + height + 14, "Forward", 10, muted, DGL_NAMESPACE::NanoVG::ALIGN_RIGHT);
-        label(left, layout.top + layout.height - 6, model.ready()
-            ? "Dot: engine commands   Ring: pointer target   Y: weight (not sensed pressure)"
-            : "Waiting for engine readback", 10, muted, DGL_NAMESPACE::NanoVG::ALIGN_LEFT);
     }
 };
 

@@ -1,5 +1,10 @@
 # Standalone composition trial: Harbour Run
 
+**Historical layout:** the editor is now a [live instrument](live-instrument.md).
+This trial and its captures document the earlier layout. Its script's UI
+coordinates need updating before rerunning; the note plot, local transport
+and bow-take controls no longer exist.
+
 The requested trial is to use the instrument, not merely render an attractive
 interface or call an unrelated synthesizer. **Harbour Run is an original
 pirate-adventure cue, not the Pirates of the Caribbean theme or an arrangement
