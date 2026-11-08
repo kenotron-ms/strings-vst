@@ -33,7 +33,7 @@ jobs:
           submodules: recursive
       - name: Linux dependencies
         if: runner.os == 'Linux'
-        run: sudo apt-get update -qq && sudo apt-get install -y ninja-build libgl1-mesa-dev libx11-dev libxext-dev libxrandr-dev libxcursor-dev libasound2-dev libpulse-dev libjack-jackd2-dev xvfb
+        run: sudo apt-get update -qq && sudo DEBIAN_FRONTEND=noninteractive apt-get install -y ninja-build libgl1-mesa-dev libx11-dev libxext-dev libxrandr-dev libxcursor-dev libasound2-dev libpulse-dev libjack-jackd2-dev xvfb xdotool imagemagick jackd2 jack-tools
       - name: Configure
         run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release ${{ matrix.configure }}
       - name: Build
@@ -96,6 +96,11 @@ jobs:
       - name: Actual VST3 audio and state tests (Windows/macOS)
         if: runner.os != 'Linux'
         run: python tests/host_smoke.py build/bin/Strings.vst3
+      - name: Native keyboard and bow UI tests (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          python tests/native_keyboard_smoke.py
+          python tests/native_expression_pad_smoke.py
       - name: Record build identity
         shell: bash
         run: |
@@ -123,6 +128,16 @@ jobs:
         with:
           name: audio-measurements-${{ matrix.platform }}
           path: build/host-smoke.json
+          if-no-files-found: ignore
+      - uses: actions/upload-artifact@v4
+        if: always() && runner.os == 'Linux'
+        with:
+          name: native-ui-${{ matrix.platform }}
+          path: |
+            build/live-keyboard-validation/*.json
+            build/live-keyboard-validation/*.png
+            build/live-expression-validation/*.json
+            build/live-expression-validation/*.png
           if-no-files-found: ignore
 
   sanitizers:

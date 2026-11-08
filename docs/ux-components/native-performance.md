@@ -1,5 +1,9 @@
 # Native performance screen — local 0.3.1
 
+**Historical revision:** the current [live instrument screen](live-instrument.md)
+removes the note plot, expression-take editor, demo transport and instructional
+panels. The following screenshots/contracts describe the earlier prototype.
+
 November 8 feedback revision: the filled organic contours are removed because
 they did not represent physical state or a calibrated musical region. The
 remaining subtle moving trail shows recent engine commands, not string motion.

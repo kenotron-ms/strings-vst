@@ -1,55 +1,44 @@
 # Native component catalogue
 
-November 8, 2026. This is an implementation inventory, not a catalogue of
-image-model fragments. All visible controls below are NanoVG geometry/text.
-The running synthesis is the research model in `docs/research-implementation.md`.
+November 8, 2026. Current live instrument view; all controls are native NanoVG
+geometry/text. The synthesis remains the model in `docs/research-implementation.md`.
 
-![Actual native component crops](screenshots/component-catalogue.png)
-
-These are crops of the running editor, not newly generated image concepts.
+![Current live instrument](screenshots/live-instrument-native.png)
 
 | Component | Responsibility | Implementation | Verification / boundary |
 | --- | --- | --- | --- |
-| Instrument header | Four profiles, solo/ensemble, presets | `UI.cpp`, `Presets.hpp` | Native instrument selection; actual VST host covers all profiles. Presets are authored, not learned. |
-| Listening transport | Audition, Stop, record local expression | `UI.cpp` | Eight-second UI-clock audition, not DAW transport or sample-accurate scheduling. |
-| Energy knob | Pair force with speed | `PerformanceKnob.hpp`, `KeyboardPerformanceView`, `UI.cpp` | Bounded/fine drag tests and native captured audio/readback pixels. Existing physical host parameters, not an amplitude-only effect. |
-| Tone knob | Pair contact with brightness | Same model/view/bridge | Native drag/screenshot and held-note host automation. An authored macro, not a measured timbre classifier. |
-| Vibrato knob | Physical pitch modulation depth | Same model/view/bridge | Native drag and reset pixel checks; actual-host held-note test. |
-| Knob editing lifecycle | Drag, Shift, scroll, reset, balanced host gestures | `UI.cpp` | Release, Escape, focus loss, preset and editor teardown close edits. No separate macro host parameters. |
-| Pitch input | DAW MIDI or focused A–K keys | `Plugin.cpp`, `Engine.cpp`, `UI.cpp` | Actual-host MIDI tests; native key/audio tests. Computer-key register is limited; no chromatic keyboard or notation input. |
-| Local piano roll | Move pitch/time, resize note, Undo | `PhraseEditor`, `PhraseRollLayout`, `PhraseRibbonView` | Headless bounds/ordering/hit tests and native selected-note pixels. Eight notes only; not the host clip. |
-| Bow-weight lane | Revise a take without altering lift/motion | `ExpressionTake`, `PhraseRibbonView`, `UI.cpp` | Frame-edit/Undo tests and actual native capture. Tone/Vibrato lanes are not implemented. |
-| Phrase backdrop | Make weight and progress readable | `PhraseRibbonView` | Low-opacity fill beneath the actual weight curve; no fake physics blob or background texture. |
-| Take comparison | Original/Take/replay/one-step Undo | `ExpressionTake`, `UI.cpp` | Bounded capture, interpolation and gate-edge tests; captured replay audio. Editor-local, no persistent phrase state or export. |
-| Optional gesture pad | Independent pitch plus signed motion/weight/lift | `ExpressionPad.hpp`, `ExpressionPadView.hpp` | Three-rate smoothing, native reversal/lift/readback, scaled hit regions and cancellation. Pointer position is not measured pressure. |
-| Input map | Explain available routes without claiming connection | `InputMapView` | Keys, Mouse, Touch, Gamepad. No mouse illustration on the default Keys screen. |
-| Controller adapter | Standard controller to native MIDI expression | `docs/ux-performance/midi.js` and adapter sources | Browser interaction/calibration/deadzone/disconnect tests plus actual VST MIDI render. No physical device test, adaptive triggers or raw DualSense touchpad. |
-| Physical details drawer | Direct physical parameters and articulation | `UI.cpp` | Sixteen controls; host state/automation and pluginval. Synthetic body profiles, not measurement fits. |
-| Safety/output strip | Release UI-owned notes, follow controls, output readout | `UI.cpp`, `Plugin.cpp` | Native release/focus tests, MIDI panic/release and finite bounded output. Not a remote DAW-wide panic. |
-| Audio engine | Contact, strings, reciprocal body, ensemble allocation | `dsp/PhysicalModel.*`, `dsp/Engine.*` | Core/physics suites, actual VST host, numerical energy/contact checks. Explicit reduced-model limitations remain. |
-| Standalone capture/export | Exercise real keyboard/knob workflow and save WAV | `tools/standalone_workflow.py` | External JACK recording of the real standalone executable. This is a reproducible trial tool, not a new native Record-to-WAV button. |
+| Instrument header | Profile, Solo/Ensemble, presets, articulation | `UI.cpp`, `Presets.hpp` | Instrument/preset changes release UI notes. Arco/Pizzicato/Tremolo remain accessible without opening Details. |
+| Energy | Pair bow force and speed | `PerformanceKnob.hpp`, `PerformanceViews.hpp`, `UI.cpp` | Native held-note audio and marker checks; an authored macro over physical parameters. |
+| Tone | Pair contact point and brightness | Same view/model bridge | Native drag and marker check, no sample crossfade or timbre classifier. |
+| Vibrato | Pitch-modulation depth | Same view/model bridge | Native drag/reset marker checks. |
+| Knob lifecycle | Drag, Shift, scroll, double-click reset | `UI.cpp` | Release, Escape, focus loss, presets and teardown end host editing gestures. |
+| Piano | 88 keys A0–C8, 52 white/36 black, deeper key travel area | `PlayableKeyboard.hpp`, `PlayableKeyboardView.hpp` | All key geometries map to absolute MIDI pitches; native click/glissando, accidentals, scaled input and safe releases. UI audition is not MIDI output to a host clip. |
+| Computer keys | 13 chromatic notes, highlighted typing span, octave and velocity | Same model/view plus `UI.cpp` | A/W/S/E/D/F/T/G/Y/H/U/J/K, Z/X register; repeated key-down ignored, key-up retains original pitch. Roots are C4/C3/C2/E1 for violin/viola/cello/bass. |
+| Bow view | Optional signed motion/weight/lift control | `ExpressionPad.hpp`, `ExpressionPadView.hpp`, `UI.cpp` | Native forward/reverse/readback and minimum-size tests. Pointer position is not sensed pressure. Knobs restores the pre-gesture baseline. |
+| Details | Sixteen physical parameters | `UI.cpp` | Separate native screen, same live piano below. Host parameter state/automation remains unchanged. |
+| Output/Release | Meter and local held-note release | `UI.cpp` | Focus-loss, Escape, pointer-release and explicit Release tests. Not a host-wide MIDI panic. |
+| Engine | Bow contact, strings, reciprocal body, ensemble allocation | `dsp/PhysicalModel.*`, `dsp/Engine.*` | Core/physics suites; reduced-model and synthetic-profile limitations remain. |
 
-## Build order
+## Removed from the live editor
 
-1. Test bounded component state and geometry independently.
-2. Render the components natively and connect real host parameters.
-3. Build VST3, CLAP and the standalone sibling from the same engine/UI.
-4. Test actual VST processing separately from standalone interaction/capture.
-5. Capture screenshots at setup, note revision, expression revision, performance
-   and final state. Retain raw audio alongside any mastered audition.
+The piano roll, note-editing hotspots, four-bar/eight-second plot, bow-weight
+lane, local demo transport, capture/take/undo controls, input-map diagrams and
+standalone/DAW help panels are removed. No hidden note editing or demo playback
+remains in `UI.cpp`. Legacy phrase/take model code is retained as experimental
+research/test support, not an active UI or composition feature.
 
-The standalone trial uses an original pirate-adventure cue, **Harbour Run**,
-not the film theme. It lays down repeatable keyboard notes, compares unchanged
-and shaped melody passes, then records violin, viola, cello and bass layers.
-It exports MIDI for a DAW and WAVs from the actual standalone audio outputs.
-An exact film-theme arrangement requires user-supplied musical material.
-See [the standalone trial](standalone-trial.md) for commands, captures and the
-distinction between local phrase editing and the longer scripted performance.
+Standalone plays live; the DAW owns arrangement, transport, recording and bounce.
+Native standalone recording/project/export is not implemented. The external
+`tools/standalone_workflow.py` trial is historical automation, not a native recorder;
+its old UI coordinates do not target this layout.
 
-## Deliberately unfinished production features
+## Validation and captures
 
-Full MIDI-file import, arbitrary-length native phrase editing, persistent take
-storage, host tempo synchronization, unrestricted undo, native WAV export,
-trained performance generation, measured body calibration and physical
-controller/haptic verification are not implied by this catalogue. The trial
-must expose these boundaries rather than simulate a finished DAW inside a PNG.
+The logical editor is 1040 × 680, minimum 832 × 544. Keyboard screenshots and
+audio checks come from `tests/native_keyboard_smoke.py` in
+`build/live-keyboard-validation/`. Knob and optional-bow captures/checks come from
+`tests/native_expression_pad_smoke.py` in `build/live-expression-validation/`.
+Both probes need Linux Xvfb, xdotool, ImageMagick, JACK tools and NumPy. They use
+synthetic input, not a physical controller or recruited-user study. They do not
+establish Mac/DAW compatibility. Release 0.3.2 adds cross-platform CI validation;
+the release's build identity and logs identify the binaries actually checked.

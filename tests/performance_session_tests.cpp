@@ -1,5 +1,6 @@
 #include "ui/PerformanceSession.hpp"
 #include "ui/PerformanceKnob.hpp"
+#include "ui/PlayableKeyboard.hpp"
 #include "dsp/Engine.hpp"
 #include <iostream>
 #include <limits>
@@ -9,6 +10,36 @@ void require(bool condition, const char* message) { if (!condition) throw std::r
 
 int main() {
     try {
+        using strings::ui::PlayableKeyboard;
+        PlayableKeyboard keyboard;
+        for (int semitone = 0; semitone < 13; ++semitone) {
+            const auto key = static_cast<uint32_t>(PlayableKeyboard::shortcuts[static_cast<size_t>(semitone)]);
+            require(keyboard.press(key, 60) == 60 + semitone, "Chromatic computer mapping incorrect");
+            require(keyboard.press(key, 72) == -1, "Key repeat retriggered a held note");
+            require(keyboard.release(key - 'a' + 'A') == 60 + semitone, "Note-off lost original octave or case");
+            require(keyboard.release(key) == -1, "Duplicate key-up sent a note-off");
+        }
+        require(keyboard.press('a', 60) == 60 && keyboard.press('s', 60) == 62 && keyboard.active(60) && keyboard.active(62), "Computer chord not tracked");
+        require(keyboard.press('q', 60) == -1 && keyboard.release('q') == -1, "Unknown key plays a note");
+        require(PlayableKeyboard::whiteNotes.size() == 52 && PlayableKeyboard::blackNotes.size() == 36, "Piano does not have 88 keys");
+        require(PlayableKeyboard::typingRangeVisible(21) && PlayableKeyboard::typingRangeVisible(96), "Visible typing endpoints rejected");
+        require(!PlayableKeyboard::typingRangeVisible(16) && !PlayableKeyboard::typingRangeVisible(97), "Typing span extends outside piano");
+        for (int note = 21; note <= 108; ++note) {
+            const bool black = strings::ui::keyboardBlackNote(note);
+            const float horizontal = PlayableKeyboard::noteLeft(note) + (black ? PlayableKeyboard::blackWidth : PlayableKeyboard::whiteWidth) * 0.5f;
+            require(PlayableKeyboard::noteAt(horizontal, black ? 578 : 650) == note, "88-key pitch / geometry roundtrip failed");
+        }
+        require(PlayableKeyboard::noteAt(29, 650) == 21 && PlayableKeyboard::noteAt(1010, 650) == 108, "Piano endpoints missing");
+        require(PlayableKeyboard::noteAt(1013, 600) == -1 && PlayableKeyboard::noteAt(220, 669) == -1, "Outside keyboard played a note");
+        require(PlayableKeyboard::noteAt(std::numeric_limits<float>::quiet_NaN(), 750) == -1, "Nonfinite pointer accepted");
+        strings::ui::PreviewTransport transport;
+        require(!transport.active() && transport.at(10) == 0, "Stopped preview has a position");
+        transport.start(10); require(transport.running() && transport.at(12) == 2, "Demo play failed");
+        transport.pause(12); require(transport.paused() && transport.at(100) == 2, "Pause lost demo position");
+        transport.resume(100); require(transport.running() && transport.at(101) == 3, "Resume restarted instead of continuing");
+        transport.pause(101); transport.resume(200); require(transport.at(201) == 4, "Repeated pauses drift");
+        require(transport.at(900) == 8, "Demo exceeded its duration");
+        transport.stop(); require(!transport.active() && transport.at(900) == 0, "Stop did not rewind");
         using strings::ui::ExpressionTake;
         ExpressionTake take;
         require(take.size() == 0 && take.at(0).gate == 0, "Empty take produces excitation");
@@ -64,7 +95,7 @@ int main() {
         }
         double previous = 0;
         for (const auto& knob : strings::ui::performanceKnobs) {
-            require(knob.contains(knob.horizontal, knob.vertical) && !knob.contains(knob.horizontal + 70, knob.vertical), "Knob hit region incorrect");
+            require(knob.contains(knob.horizontal, knob.vertical) && !knob.contains(knob.horizontal + knob.radius + 13, knob.vertical), "Knob hit region incorrect");
             require(!knob.contains(std::numeric_limits<float>::quiet_NaN(), knob.vertical), "Nonfinite knob position accepted");
         }
         using strings::ui::PerformanceKnob;

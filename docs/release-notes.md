@@ -1,4 +1,35 @@
-# Strings 0.3.1 (research/performance build)
+# Strings 0.3.2
+
+Experimental physical-modeling strings with a simpler live instrument interface.
+
+- Full 88-key A0–C8 piano: click, hold or drag; computer-keyboard playing,
+  highlighted typing span, octave, velocity and safe note release.
+- Energy, Tone and Vibrato performance knobs; optional Bow gesture view and
+  Details for the physical parameters. The keyboard stays available in every view.
+- Removed the note plot, local demo/take transport and instructional panels.
+  Use your DAW for arranging, recording, automation and bounce.
+- Violin, viola, cello and double bass; solo legato and fixed-size divisi;
+  arco, pizzicato, tremolo and twelve presets.
+- Research engine: four strings per player, two transverse waveguide lanes per
+  string, nonlinear bow contact, sympathetic response and passive bridge/body coupling.
+- VST3, CLAP and standalone for Mac universal (Apple Silicon/Intel, macOS 11+),
+  Windows x86-64 and Linux x86-64. Each zip includes build identity, audio examples
+  and validation evidence. `SHA256SUMS.txt` checks all three archives.
+
+On macOS, extract `Strings-0.3.2-macos-universal.zip` and copy the entire
+`Strings.vst3` bundle into `~/Library/Audio/Plug-Ins/VST3/`. Rescan in REAPER and
+select Strings as a VST3 instrument. See the included `docs/mac-testing.md`.
+Mac binaries are ad-hoc signed, **not Apple-notarized**. No Audio Unit is included;
+Logic Pro is not supported. Standalone is for live playing, not native recording/export.
+Plugin piano keys audition internally; recordable MIDI notes come from the DAW's
+editor, computer-MIDI keyboard or external MIDI input.
+
+This remains a reduced research model with synthetic body profiles, not measured
+acoustic equivalence or commercial-instrument parity. Measured calibration, full
+bow-hair/thermal simulation, trained performance models and native controller
+haptics are not implemented. No copyrighted score/theme audio is included.
+
+## Previous local prototype: Strings 0.3.1
 
 Experimental physical-modeling instrument with a keyboard-first native editor.
 
